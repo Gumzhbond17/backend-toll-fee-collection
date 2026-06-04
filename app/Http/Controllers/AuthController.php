@@ -109,7 +109,7 @@ class AuthController extends Controller
     public function me()
     {
         // ✅ ກວດສອບ authentication ກ່ອນ
-        $user = auth('api')->user();
+        $user = auth('api')->user()->with('site:id,site_name')->with('department:id,dept_name_la,dept_name_en')->get();
 
         if (! $user) {
             return response()->json([

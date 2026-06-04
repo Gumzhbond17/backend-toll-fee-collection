@@ -7,12 +7,46 @@ use Illuminate\Http\Request;
 
 class DistrictController extends Controller
 {
+    protected HelperController $helper;
+
+    protected District $model;
+
+    public function __construct()
+    {
+        $this->helper = new HelperController;
+        $this->model = new District;
+    }
+
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        //
+        try {
+            // declare the search variable
+            $search = request('search') ?? '';
+
+            // declare the limit variable
+            $limit = request('limit') ?? 10;
+
+            // get all data from the model join with searching
+            $districts = $this->model->with('province:id,province_name_la,province_name_en')->with('user:id,username')->where(function ($query) use ($search) {
+                if ($search) {
+                    $query->where('district_name_la', 'like', '%'.$search.'%')
+                        ->orWhere('district_name_en', 'like', '%'.$search.'%');
+                }
+            });
+
+            // paginate the data
+            $data = $this->helper->paginate($districts, $limit);
+
+            // return success message
+            return $this->helper->response('Retrieving all data is successfully', $data, 200);
+
+        } catch (\Throwable $th) {
+            // return error message
+            return $this->helper->response($th->getMessage(), '', 500);
+        }
     }
 
     /**
@@ -28,15 +62,58 @@ class DistrictController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        try {
+
+            // define the validation rule
+            $rule = [
+                'province_id' => 'required|exists:provinces,id',
+                'district_name_la' => 'required|string|max:100',
+                'district_name_en' => 'required|string|max:100',
+                'created_by' => 'required|integer',
+            ];
+
+            // check the validated data from request
+            $this->helper->validated($request, $rule);
+
+            // generate the array data
+            $obj = [
+                'province_id' => $request->province_id,
+                'district_name_la' => $request->district_name_la,
+                'district_name_en' => $request->district_name_en,
+                'created_by' => $request->created_by,
+            ];
+
+            // create the data from generated array
+            $create_data = $this->model->create($obj);
+
+            // return success message
+            return $this->helper->response('Created data successfully', $create_data, 201);
+        } catch (\Throwable $th) {
+            // return error message
+            return $this->helper->response($th->getMessage(), '', 500);
+        }
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(District $district)
+    public function show(string $district_id)
     {
-        //
+        try {
+            // find the data by id
+            $district = $this->model->query()->where('id', $district_id)->with('province:id,province_name_la,province_name_en')->with('user:id,username')->first();
+
+            // check if the data is not found
+            if (! $district) {
+                return $this->helper->response('Data not found', '', 404);
+            }
+
+            // return success message
+            return $this->helper->response('Retrieving data is successfully', $district, 200);
+        } catch (\Throwable $th) {
+            // return error message
+            return $this->helper->response($th->getMessage(), '', 500);
+        }
     }
 
     /**
@@ -50,16 +127,71 @@ class DistrictController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, District $district)
+    public function update(Request $request, string $district_id)
     {
-        //
+        try {
+            // find the data by id
+            $update_data = $this->model->query()->where('id', $district_id)->first();
+
+            // check if the data is not found
+            if (! $update_data) {
+                return $this->helper->response('Data not found', '', 404);
+            }
+
+            // define the validation rule
+            $rule = [
+                'province_id' => 'required|exists:provinces,id',
+                'district_name_la' => 'required|string|max:100',
+                'district_name_en' => 'required|string|max:100',
+                'is_active' => 'required|boolean',
+                'updated_by' => 'required|integer',
+            ];
+
+            // check the validation data from request
+            $this->helper->validated($request, $rule);
+
+            // generate the array data
+            $obj = [
+                'province_id' => $request->province_id,
+                'district_name_la' => $request->district_name_la,
+                'district_name_en' => $request->district_name_en,
+                'is_active' => $request->is_active,
+                'updated_by' => $request->updated_by,
+            ];
+
+            // update the data on the found instance
+            $update_data->fill($obj)->save();
+
+            // return success message
+            return $this->helper->response('Updated data successfully', $update_data, 200);
+        } catch (\Throwable $th) {
+            // return error message
+            return $this->helper->response($th->getMessage(), '', 500);
+        }
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(District $district)
+    public function destroy(string $district_id)
     {
-        //
+        try {
+            // find the data by id
+            $delete_data = $this->model->findOrFail($district_id);
+
+            // check if the data id is not found
+            if (! $delete_data) {
+                return $this->helper->response('Data not found', '', 404);
+            }
+
+            // delete the data
+            $delete_data->delete();
+
+            // return success message
+            return $this->helper->response('Deleted data successfully', $delete_data, 200);
+        } catch (\Throwable $th) {
+            // return error message
+            return $this->helper->response($th->getMessage(), '', 500);
+        }
     }
 }

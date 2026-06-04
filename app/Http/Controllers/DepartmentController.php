@@ -9,7 +9,7 @@ class DepartmentController extends Controller
 {
     protected HelperController $helper;
 
-    public Department $model;
+    protected Department $model;
 
     public function __construct()
     {
@@ -80,10 +80,10 @@ class DepartmentController extends Controller
             // create the data from generated array object
             $create_data = $this->model->create($obj);
 
-            // response success message
+            // return success message
             return $this->helper->response('Created data successfully', $create_data, 201);
         } catch (\Throwable $th) {
-            // response error message
+            // return error message
             return $this->helper->response($th->getMessage(), '', 500);
         }
     }
@@ -95,20 +95,19 @@ class DepartmentController extends Controller
     {
         try {
             // find the data by id
-            $data = $this->model->query()->where('id', $dept_id)->with('user:id,username')->first();
+            $department = $this->model->query()->where('id', $dept_id)->with('user:id,username')->first();
 
             // check if the data is not found
-            if (! $data) {
+            if (! $department) {
                 return $this->helper->response('Data is not found', '', 404);
             }
 
             // return success message
-            return $this->helper->response('Retrieved data successfully', $data, 200);
+            return $this->helper->response('Retrieved data successfully', $department, 200);
         } catch (\Throwable $th) {
-            // response error message
+            // return error message
             return $this->helper->response($th->getMessage(), '', 500);
         }
-
     }
 
     /**
@@ -154,10 +153,10 @@ class DepartmentController extends Controller
             // $data->update($obj);
             $update_data->fill($obj)->save();
 
-            // response success message
+            // return success message
             return $this->helper->response('Updated data successfully', $update_data, 200);
         } catch (\Throwable $th) {
-            // response error message
+            // return error message
             return $this->helper->response($th->getMessage(), '', 500);
         }
     }
@@ -179,10 +178,10 @@ class DepartmentController extends Controller
             // deleting the data
             $delete_data->delete();
 
-            // response success messsage
+            // return success message
             return $this->helper->response('Deleted data successfully', $delete_data, 200);
         } catch (\Throwable $th) {
-            // response error message
+            // return error message
             return $this->helper->response($th->getMessage(), '', 500);
         }
     }
